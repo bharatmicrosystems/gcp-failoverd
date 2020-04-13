@@ -19,6 +19,7 @@ if $external; then
     EXTERNAL_IP=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $2 }'`
 fi
 while true; do
+  ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
   if $internal; then
       INTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $NF }'`
   fi
@@ -27,9 +28,38 @@ while true; do
   fi
   if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
   then
+    #Check if the instance where the IP is tagged is running
+    INTERNAL_INSTANCE_REGION=$(gcloud compute addresses list --filter="name=${internal_vip}"|grep ${internal_vip}|awk '{print $(NF-2)}')
+    INTERNAL_INSTANCE_NAME=$(gcloud compute addresses describe ${internal_vip} --region=${INTERNAL_INSTANCE_REGION} --format='get(users[0])')
+    INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
+    if [[ $INTERNAL_INSTANCE_STATUS == "RUNNING" ]];
+    then
+      echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+    else
+      INTERNAL_IP_STATUS="RESERVED"
+    fi
+  fi
+  if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
+  then
+    #Check if the instance where the IP is tagged is running
+    EXTERNAL_INSTANCE_REGION=$(gcloud compute addresses list --filter="name=${external_vip}"|grep ${external_vip}|awk '{print $(NF-1)}')
+    EXTERNAL_INSTANCE_NAME=$(gcloud compute addresses describe ${external_vip} --region=${EXTERNAL_INSTANCE_REGION} --format='get(users[0])')
+    EXTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${ZONE} $EXTERNAL_INSTANCE_NAME --format='get(status)')
+    if [[ $EXTERNAL_INSTANCE_STATUS == "RUNNING" ]];
+    then
+      echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+    else
+      EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${ZONE} $EXTERNAL_INSTANCE_NAME --format='value(networkInterfaces[].accessConfigs[].name.list())')
+      #Delete the access config from the terminated node
+      gcloud compute instances delete-access-config --zone=${ZONE} $EXTERNAL_INSTANCE_NAME --access-config-name=${EXTERNAL_ACCESS_CONFIG}
+      EXTERNAL_IP_STATUS="RESERVED"
+    fi
+  fi
+  if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
+  then
     echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+    sleep 60
   else
-    ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances network-interfaces update $(hostname) \
       --zone $ZONE \
@@ -39,8 +69,8 @@ while true; do
   if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
   then
     echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+    sleep 60
   else
-    ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances add-access-config $(hostname) \
      --zone $ZONE \
