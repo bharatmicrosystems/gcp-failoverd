@@ -32,12 +32,34 @@ module "nginx-instance02" {
   scopes = ["compute-rw","storage-rw"]
 }
 
-module "allow-ssh-http" {
-  name        = "allow-ssh-http"
+module "bastion" {
+  source        = "./modules/instance-external"
+  instance_name = "bastion"
+  instance_machine_type = "n1-standard-1"
+  instance_zone = "${var.region}-a"
+  instance_image = "centos-7-v20191014"
+  subnet_name = "default"
+  startup_script = "sudo yum install -y git wget"
+  tags = ["bastion"]
+  scopes = ["compute-rw","storage-rw"]
+}
+
+module "allow-http" {
+  name        = "allow-http"
   source        = "./modules/firewall"
   source_ranges = var.source_ranges
   source_tags = []
-  tcp_ports = ["80","22"]
+  tcp_ports = ["80"]
   udp_ports = []
   target_tags = ["nginx"]
+}
+
+module "allow-ssh" {
+  name        = "allow-ssh"
+  source        = "./modules/firewall"
+  source_ranges = var.source_ranges
+  source_tags = []
+  tcp_ports = ["80"]
+  udp_ports = []
+  target_tags = ["bastion"]
 }
