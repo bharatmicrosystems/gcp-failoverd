@@ -11,11 +11,11 @@ while getopts ":i:e:l:" opt; do
     esac
 done
 if $internal; then
-  sed -i "s/#VIP/-i ${internal_vip} #VIP/g" assign-vip.service
+  sed -i "s/#VIP/-i ${internal_vip} #VIP/g" gcp-failoverd.service
 fi
 
 if $external; then
-  sed -i "s/#VIP/-e ${external_vip}/g" assign-vip.service
+  sed -i "s/#VIP/-e ${external_vip}/g" gcp-failoverd.service
 fi
 
 for instance in $(echo $loadbalancers | tr ',' ' '); do
