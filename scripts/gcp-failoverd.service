@@ -1,0 +1,12 @@
+[Unit]
+Description=GCP Failoverd Agent
+After=nginx.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/gcp-failoverd.sh #INTERNAL_VIP #EXTERNAL_VIP
+TimeoutStartSec=0
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
