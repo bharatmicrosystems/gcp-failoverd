@@ -1,4 +1,8 @@
-
+module "nat" {
+  source     = "./modules/cloud-nat"
+  region     = var.region
+  name    = "cloud-nat"
+}
 resource "google_compute_address" "nginx-external-vip" {
   name = "nginx-external-vip"
 }
