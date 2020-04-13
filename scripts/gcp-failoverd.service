@@ -6,6 +6,9 @@ After=nginx.service
 Type=simple
 ExecStart=/usr/bin/gcp-failoverd.sh #INTERNAL_VIP #EXTERNAL_VIP
 TimeoutStartSec=0
+ExecStop=/bin/kill -2 $MAINPID
+ExecStop=/bin/kill -9 $(/bin/ps -ef | /bin/grep assign-internal-vip | /bin/grep -v grep | /bin/awk '{print $2}')
+ExecStop=/bin/kill -9 $(/bin/ps -ef | /bin/grep assign-external-vip | /bin/grep -v grep | /bin/awk '{print $2}')
 Restart=on-abort
 
 [Install]
