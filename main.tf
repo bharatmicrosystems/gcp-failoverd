@@ -73,7 +73,7 @@ module "allow-bastion-to-instances" {
   source        = "./modules/firewall"
   source_ranges = []
   source_tags = ["bastion"]
-  tcp_ports = ["22"]
+  tcp_ports = ["22","80"]
   udp_ports = []
   target_tags = []
 }
