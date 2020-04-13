@@ -33,8 +33,8 @@ while true; do
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances network-interfaces update $(hostname) \
       --zone $ZONE \
-      --aliases "${INTERNAL_IP_STATUS}/32" >> /etc/gcp-failoverd/takeover.log 2>&1
-    echo "I became the MASTER of ${INTERNAL_IP_STATUS} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+      --aliases "${INTERNAL_IP}/32" >> /etc/gcp-failoverd/takeover.log 2>&1
+    echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
   fi
   if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
   then
@@ -43,8 +43,8 @@ while true; do
     ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances add-access-config $(hostname) \
-     --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP_STATUS >> /etc/gcp-failoverd/takeover.log 2>&1
-    echo "I became the MASTER of ${EXTERNAL_IP_STATUS} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+     --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /etc/gcp-failoverd/takeover.log 2>&1
+    echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
   fi
   sleep 30
 done
