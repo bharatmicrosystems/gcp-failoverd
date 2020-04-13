@@ -83,5 +83,4 @@ while true; do
      --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /etc/gcp-failoverd/takeover.log 2>&1
     echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
   fi
-  sleep 30
 done
