@@ -59,7 +59,17 @@ module "allow-ssh" {
   source        = "./modules/firewall"
   source_ranges = var.source_ranges
   source_tags = []
-  tcp_ports = ["80"]
+  tcp_ports = ["22"]
   udp_ports = []
   target_tags = ["bastion"]
+}
+
+module "allow-bastion-to-instances" {
+  name        = "allow-bastion-to-instances"
+  source        = "./modules/firewall"
+  source_ranges = []
+  source_tags = ["bastion"]
+  tcp_ports = ["22"]
+  udp_ports = []
+  target_tags = []
 }

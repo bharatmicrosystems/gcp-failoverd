@@ -20,6 +20,6 @@ fi
 
 for instance in $(echo $loadbalancers | tr ',' ' '); do
   ZONE=`gcloud compute instances list --filter="name=${instance}"|grep ${instance} | awk '{ print $2 }'`
-  gcloud compute scp --zone=$ZONE --internal-ip gcp-failoverd.service gcp-failoverd.sh configure-gcp-failoverd.sh assign-internal-vip.sh assign-external-vip.sh ${instance}:~/
+  gcloud compute scp --zone=$ZONE --internal-ip gcp-failoverd.service gcp-failoverd.sh configure-gcp-failoverd.sh ${instance}:~/
   gcloud compute ssh --zone=$ZONE --internal-ip ${instance} -- "cd ~/ && sh -x configure-gcp-failoverd.sh"
 done
