@@ -43,6 +43,7 @@ while true; do
     ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances add-access-config $(hostname) \
+     --zone $ZONE \
      --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /etc/gcp-failoverd/takeover.log 2>&1
     echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
   fi
