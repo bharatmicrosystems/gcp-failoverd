@@ -8,7 +8,7 @@ meta_data() {
   cat <<END
 <?xml version="1.0"?>
 <!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
-<resource-agent name="foobar" version="0.1">
+<resource-agent name="gcp-failoverd" version="0.1">
   <version>0.1</version>
   <longdesc lang="en"> floatip ocf resource agent for claiming a specified Floating IP via the GCP API</longdesc>
   <shortdesc lang="en">Assign Floating IP via GCP API</shortdesc>
@@ -91,7 +91,6 @@ assign_vip() {
     if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
     then
       echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
-      sleep 60
     else
       # Assign IP aliases to me because now I am the MASTER!
       gcloud compute instances network-interfaces update $(hostname) \
@@ -105,7 +104,6 @@ assign_vip() {
     if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
     then
       echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
-      sleep 60
     else
       # Assign IP aliases to me because now I am the MASTER!
       gcloud compute instances add-access-config $(hostname) \
@@ -116,6 +114,7 @@ assign_vip() {
         external_status=false
       fi
     fi
+    sleep 2
   done
 } >> /etc/gcp-failoverd/gcp-failoverd.log
 

@@ -29,15 +29,11 @@ PASSWORD=`head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1
 sed -i "s/#PASSWORD/$PASSWORD/g" configure-gcp-failoverd-init.sh
 sed -i "s/#PASSWORD/$PASSWORD/g" configure-gcp-failoverd-bootstrap.sh
 sed -i "s/#CLUSTER_NAME/$CLUSTER_NAME/g" configure-gcp-failoverd-bootstrap.sh
-ZONE=`gcloud compute instances list --filter="name=${instance}"|grep ${instance} | awk '{ print $2 }'`
-PRIMARY_IP=$(gcloud compute instances describe --zone=$ZONE $instance --format='get(networkInterfaces[0].networkIP)')
 sed -i "s/#PRIMARY_IP/$instance/g" configure-gcp-failoverd-bootstrap.sh
 priority=$(($priority - 10))
 SECONDARY_IPS=''
 for peer in $(echo $loadbalancers | tr ',' ' '); do
   if [[ $peer != $instance ]]; then
-    ZONE=`gcloud compute instances list --filter="name=${peer}"|grep ${peer} | awk '{ print $2 }'`
-    PEER_IP=$(gcloud compute instances describe --zone=$ZONE $peer --format='get(networkInterfaces[0].networkIP)')
     SECONDARY_IPS=$SECONDARY_IPS" "$instance
   fi
 done
