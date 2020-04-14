@@ -8,10 +8,21 @@ while getopts ":i:e:l:c:" opt; do
         external=true
         ;;
     l)  loadbalancers=$OPTARG
+        lb=true
         ;;
     c)  CLUSTER_NAME=$OPTARG
+        cn=true
     esac
 done
+
+if $lb && $cn && $internal; then
+  echo 'Startup....'
+else
+  echo "Usage: $0 -l LOAD_BALANCERS -c CLUSTER_NAME -i INTERNAL_VIP_NAME [-e EXTERNAL_VIP_NAME]" >&2
+  exit 1
+fi
+
+
 priority=150
 instance=$(echo $loadbalancers | tr ',' ' ' | awk {'print $1'})
 if $internal; then
