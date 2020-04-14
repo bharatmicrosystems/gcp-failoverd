@@ -50,10 +50,10 @@ else
 fi
 
 assign_vip() {
-  #internal_vip
-  #internal=true
-  #external_vip
-  #external=true
+  internal_vip=nginx-internal-vip
+  internal=true
+  external_vip=nginx-external-vip
+  external=true
 
   mkdir -p /etc/gcp-failoverd
   #Check if the VIP is being used
