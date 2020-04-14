@@ -18,14 +18,22 @@ fi
 if $external; then
     EXTERNAL_IP=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $2 }'`
 fi
-while true; do
+internal_status=false
+external_status=false
+while $internal_status && $external_status; do
   ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
   if $internal; then
-      INTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $NF }'`
+    INTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $NF }'`
+  else
+    internal_status=true
   fi
+
   if $external; then
-      EXTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $NF }'`
+    EXTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $NF }'`
+  else
+    external_status=true
   fi
+
   if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
   then
     #Check if the instance where the IP is tagged is running
@@ -70,7 +78,10 @@ while true; do
     gcloud compute instances network-interfaces update $(hostname) \
       --zone $ZONE \
       --aliases "${INTERNAL_IP}/32" >> /etc/gcp-failoverd/takeover.log 2>&1
-    echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+    if [ $? -eq 0 ]; then
+      echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+      internal_status=true
+    fi
   fi
   if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
   then
@@ -81,6 +92,9 @@ while true; do
     gcloud compute instances add-access-config $(hostname) \
      --zone $ZONE \
      --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /etc/gcp-failoverd/takeover.log 2>&1
-    echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+    if [ $? -eq 0 ]; then
+      echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+      external_status=true
+    fi
   fi
 done
