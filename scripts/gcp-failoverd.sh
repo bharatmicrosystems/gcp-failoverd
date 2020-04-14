@@ -13,7 +13,7 @@ meta_data() {
   <longdesc lang="en"> floatip ocf resource agent for claiming a specified Floating IP via the GCP API</longdesc>
   <shortdesc lang="en">Assign Floating IP via GCP API</shortdesc>
   <actions>
-    <action name="start"        timeout="20" />
+    <action name="start"        timeout="600" />
     <action name="stop"         timeout="20" />
     <action name="monitor"      timeout="20"
                                 interval="10" depth="0" />
