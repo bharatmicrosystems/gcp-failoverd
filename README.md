@@ -4,6 +4,7 @@ This project makes use of pacemaker, corosyn and floating-ips on centos-7.
 
 ## Quick Start with an NGINX example
 On your local machine install terraform
+
 Create a service account on GCP -> Give appropratiate permissions -> Add to act as a service account user -> Generate and download JSON Key -> Rename json key to credentials.json and place it in the root directory
 ```
 terraform init
