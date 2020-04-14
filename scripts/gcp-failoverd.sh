@@ -134,7 +134,7 @@ elif [ "status" == "$param" ] ; then
     exit 1
   fi
 elif [ "monitor" == "$param" ] ; then
-  if $HAS_FLOATING_IP ; then
+  if [[ $HAS_FLOATING_IP != '' ]]; then
     exit 0
   else
     exit 7
