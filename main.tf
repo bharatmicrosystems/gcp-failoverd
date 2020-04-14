@@ -77,3 +77,14 @@ module "allow-bastion-to-instances" {
   udp_ports = []
   target_tags = []
 }
+
+resource "google_compute_firewall" "allow-vrrp" {
+  name    = "allow-vrrp"
+  network = "default"
+
+  allow {
+    protocol = "112"
+  }
+  source_tags=["nginx"]
+  target_tags = ["nginx"]
+}

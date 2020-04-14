@@ -6,4 +6,6 @@ sudo mv gcp-failoverd.sh /usr/bin/
 #sudo systemctl start gcp-failoverd.service
 #sudo systemctl enable gcp-failoverd.service
 sudo mv keepalived.conf /etc/keepalived/
+systemctl enable keepalived
+systemctl start keepalived
 systemctl restart keepalived
