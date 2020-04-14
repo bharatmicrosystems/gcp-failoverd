@@ -22,14 +22,16 @@ for instance in $(echo $loadbalancers | tr ',' ' '); do
   if $external; then
     sed -i "s/#VIP/-e ${external_vip}/g" keepalived.conf
   fi
-  SOURCE_IP=$(gcloud compute instances describe $instance --format='get(networkInterfaces[0].networkIP)')
+  ZONE=`gcloud compute instances list --filter="name=${instance}"|grep ${instance} | awk '{ print $2 }'`
+  SOURCE_IP=$(gcloud compute instances describe --zone=$ZONE $instance --format='get(networkInterfaces[0].networkIP)')
   sed -i "s/#SOURCE_IP/$SOURCE_IP/g" keepalived.conf
   sed -i "s/#VR_ID/$vr_id/g" keepalived.conf
   sed -i "s/#PRIORITY/$priority/g" keepalived.conf
   priority=$(($priority - 10))
   for peer in $(echo $loadbalancers | tr ',' ' '); do
     if [[ $peer != $instance ]]; then
-      PEER_IP=$(gcloud compute instances describe $peer --format='get(networkInterfaces[0].networkIP)')
+      ZONE=`gcloud compute instances list --filter="name=${peer}"|grep ${peer} | awk '{ print $2 }'`
+      PEER_IP=$(gcloud compute instances describe --zone=$ZONE $peer --format='get(networkInterfaces[0].networkIP)')
       sed -i "s/#PEER_IP/$PEER_IP\n        #PEER_IP/g" keepalived.conf
     fi
   done
