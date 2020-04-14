@@ -34,7 +34,7 @@ priority=$(($priority - 10))
 SECONDARY_IPS=''
 for peer in $(echo $loadbalancers | tr ',' ' '); do
   if [[ $peer != $instance ]]; then
-    SECONDARY_IPS=$SECONDARY_IPS" "$instance
+    SECONDARY_IPS=$SECONDARY_IPS" "$peer
   fi
 done
 sed -i "s/#SECONDARY_IPS/$SECONDARY_IPS/g" configure-gcp-failoverd-bootstrap.sh
