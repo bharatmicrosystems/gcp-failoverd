@@ -17,11 +17,15 @@ instance=$(echo $loadbalancers | tr ',' ' ' | awk {'print $1'})
 if $internal; then
   sed -i "s/#internal_vip/internal_vip=${internal_vip}/g" gcp-failoverd.sh
   sed -i "s/#internal=true/internal=true/g" gcp-failoverd.sh
+else
+  sed -i "s/#internal=true/internal=false/g" gcp-failoverd.sh
 fi
 
 if $external; then
   sed -i "s/#external_vip/external_vip=${external_vip}/g" gcp-failoverd.sh
   sed -i "s/#external=true/external=true/g" gcp-failoverd.sh
+else
+  sed -i "s/#external=true/external=false/g" gcp-failoverd.sh
 fi
 cp -a configure-gcp-failoverd-init.sh.template configure-gcp-failoverd-init.sh
 cp -a configure-gcp-failoverd-bootstrap.sh.template configure-gcp-failoverd-bootstrap.sh
