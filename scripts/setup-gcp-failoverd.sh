@@ -1,4 +1,8 @@
 #!/bin/bash
+lb=false
+cm=false
+internal=false
+external=false
 while getopts ":i:e:l:c:" opt; do
     case "$opt" in
     i)  internal_vip=$OPTARG
