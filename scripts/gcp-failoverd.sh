@@ -23,33 +23,6 @@ meta_data() {
 END
 }
 
-if [ "start" == "$param" ] ; then
-  assign_vip
-  exit 0
-elif [ "stop" == "$param" ] ; then
-  exit 0;
-elif [ "status" == "$param" ] ; then
-  if [[ $HAS_FLOATING_IP != '' ]]; then
-    echo "Has Floating IP"
-    exit 0
-  else
-    echo "Does Not Have Floating IP"
-    exit 1
-  fi
-elif [ "monitor" == "$param" ] ; then
-  if $HAS_FLOATING_IP ; then
-    exit 0
-  else
-    exit 7
-  fi
-elif [ "meta-data" == "$param" ] ; then
-  meta_data
-  exit 0
-else
-  echo "no such command $param"
-  exit 1;
-fi
-
 assign_vip() {
   #internal_vip
   #internal=true
@@ -145,3 +118,31 @@ assign_vip() {
     fi
   done
 } >> /etc/gcp-failoverd/gcp-failoverd.log
+
+
+if [ "start" == "$param" ] ; then
+  assign_vip
+  exit 0
+elif [ "stop" == "$param" ] ; then
+  exit 0;
+elif [ "status" == "$param" ] ; then
+  if [[ $HAS_FLOATING_IP != '' ]]; then
+    echo "Has Floating IP"
+    exit 0
+  else
+    echo "Does Not Have Floating IP"
+    exit 1
+  fi
+elif [ "monitor" == "$param" ] ; then
+  if $HAS_FLOATING_IP ; then
+    exit 0
+  else
+    exit 7
+  fi
+elif [ "meta-data" == "$param" ] ; then
+  meta_data
+  exit 0
+else
+  echo "no such command $param"
+  exit 1;
+fi
