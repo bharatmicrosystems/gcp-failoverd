@@ -3,7 +3,7 @@ param=$1
 EXTERNAL_INSTANCE_NAME=$(hostname)
 EXTERNAL_INSTANCE_ZONE=$(gcloud compute instances list --filter="name=${EXTERNAL_INSTANCE_NAME}"|grep ${EXTERNAL_INSTANCE_NAME}|awk '{print $2}')
 HAS_FLOATING_IP=`gcloud compute instances describe --zone=$EXTERNAL_INSTANCE_ZONE $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].natIP)'`
-
+mkdir -p /etc/gcp-failoverd
 meta_data() {
   cat <<END
 <?xml version="1.0"?>
