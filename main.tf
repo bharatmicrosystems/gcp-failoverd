@@ -72,19 +72,18 @@ module "allow-bastion-to-instances" {
   name        = "allow-bastion-to-instances"
   source        = "./modules/firewall"
   source_ranges = []
-  source_tags = ["bastion"]
+  source_tags = ["bastion","nginx"]
   tcp_ports = ["22","80"]
   udp_ports = []
   target_tags = []
 }
 
-resource "google_compute_firewall" "allow-vrrp" {
-  name    = "allow-vrrp"
-  network = "default"
-
-  allow {
-    protocol = "112"
-  }
-  source_tags=["nginx"]
+module "allow-nginx-nginx" {
+  name        = "allow-nginx-nginx"
+  source        = "./modules/firewall"
+  source_ranges = []
+  source_tags = ["nginx"]
+  tcp_ports = []
+  udp_ports = ["5404-5406"]
   target_tags = ["nginx"]
 }

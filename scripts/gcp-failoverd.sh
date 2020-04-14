@@ -1,14 +1,8 @@
 #!/bin/bash
-while getopts ":i:e:" opt; do
-    case "$opt" in
-    i)  internal_vip=$OPTARG
-        internal=true
-        ;;
-    e)  external_vip=$OPTARG
-        external=true
-        ;;
-    esac
-done
+#internal_vip
+#internal=true
+#external_vip
+#external=true
 
 mkdir -p /etc/gcp-failoverd
 #Check if the VIP is being used
