@@ -82,9 +82,9 @@ assign_vip() {
       then
         echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
       else
-        EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${ZONE} $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].name)')
+        EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].name)')
         #Delete the access config from the terminated node
-        gcloud compute instances delete-access-config --zone=${ZONE} $EXTERNAL_INSTANCE_NAME --access-config-name=${EXTERNAL_ACCESS_CONFIG}
+        gcloud compute instances delete-access-config --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --access-config-name=${EXTERNAL_ACCESS_CONFIG}
         EXTERNAL_IP_STATUS="RESERVED"
       fi
     fi
