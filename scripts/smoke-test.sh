@@ -65,14 +65,14 @@ for action in stop stop delete delete; do
   fi
 
   #Now stop the allocated instance
-  echo "Stopping instance $INTERNAL_INSTANCE at $(date)"
-  gcloud compute instances $action --zone $INTERNAL_INSTANCE_ZONE $INTERNAL_INSTANCE
-  INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
-  while [[ $INTERNAL_INSTANCE_STATUS == "STOPPING" ]]
-  do
-    INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
-    echo "Waiting for the instance $INTERNAL_INSTANCE to TERMINATE, current status $INTERNAL_INSTANCE_STATUS"
-    echo "Sleeping for 10 secs..."
-    sleep 10
-  done
+  echo "Taking $action action on instance $INTERNAL_INSTANCE at $(date)"
+  gcloud compute instances $action --zone $INTERNAL_INSTANCE_ZONE $INTERNAL_INSTANCE_NAME
+# INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
+# while [[ $INTERNAL_INSTANCE_STATUS == "STOPPING" ]]
+# do
+#    INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
+#    echo "Waiting for the instance $INTERNAL_INSTANCE to TERMINATE, current status $INTERNAL_INSTANCE_STATUS"
+#    echo "Sleeping for 10 secs..."
+#    sleep 10
+#  done
 done
