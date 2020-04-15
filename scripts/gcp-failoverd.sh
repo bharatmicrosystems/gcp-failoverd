@@ -55,7 +55,7 @@ echo "$(date): Running agent for internal-vip: $internal_vip & external-vip: $ex
 if [ "start" == "$param" ] ; then
   systemctl start nginx
   echo "$(date): Running agent start with params: -i $internal_vip$external_params " >> /var/log/gcp-failoverd/startup.log
-  /bin/sh /usr/bin/gcp-assign-vip.sh -i $internal_vip$external_params >> /var/log/gcp-failoverd/startup.log
+  /bin/sh /usr/bin/gcp-assign-vip.sh -i ${internal_vip}${external_params} >> /var/log/gcp-failoverd/startup.log
   exit 0
 elif [ "stop" == "$param" ] ; then
   systemctl stop nginx
