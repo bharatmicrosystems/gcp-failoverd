@@ -32,7 +32,7 @@ elif [ "status" == "$param" ] ; then
   if [ $status -eq 0 ]; then
     echo "NGINX Running"
     exit 0
-  elif [ $sttaus -eq 3 ]; then
+  elif [ $status -eq 3 ]; then
     echo "NGINX is Stopped"
     exit 7
   else
@@ -45,7 +45,7 @@ elif [ "monitor" == "$param" ] ; then
   if [ $status -eq 0 ]; then
     echo "NGINX Running"
     exit 0
-  elif [ $sttaus -eq 3 ]; then
+  elif [ $status -eq 3 ]; then
     echo "NGINX is Stopped"
     exit 7
   else
