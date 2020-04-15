@@ -1,0 +1,16 @@
+vrrp_instance floating_ip {
+    state MASTER
+    interface ens4
+    unicast_src_ip #SOURCE_IP
+    unicast_peer {
+        #PEER_IP
+    }
+
+    virtual_router_id #VR_ID
+    priority #PRIORITY
+    authentication {
+        auth_type PASS
+        auth_pass your_passwd
+    }
+    notify_master /usr/bin/gcp-failoverd.sh #VIP
+}
