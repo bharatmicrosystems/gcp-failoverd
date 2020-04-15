@@ -30,17 +30,17 @@ fi
 priority=150
 instance=$(echo $loadbalancers | tr ',' ' ' | awk {'print $1'})
 if $internal; then
-  sed -i "s/#internal_vip/internal_vip=${internal_vip}/g" gcp-assign-vip.sh
-  sed -i "s/#internal=true/internal=true/g" gcp-assign-vip.sh
+  sed -i "s/#internal_vip/internal_vip=${internal_vip}/g" gcp-failoverd.sh
+  sed -i "s/#internal=true/internal=true/g" gcp-failoverd.sh
 else
-  sed -i "s/#internal=true/internal=false/g" gcp-assign-vip.sh
+  sed -i "s/#internal=true/internal=false/g" gcp-failoverd.sh
 fi
 
 if $external; then
-  sed -i "s/#external_vip/external_vip=${external_vip}/g" gcp-assign-vip.sh
-  sed -i "s/#external=true/external=true/g" gcp-assign-vip.sh
+  sed -i "s/#external_vip/external_vip=${external_vip}/g" gcp-failoverd.sh
+  sed -i "s/#external=true/external=true/g" gcp-failoverd.sh
 else
-  sed -i "s/#external=true/external=false/g" gcp-assign-vip.sh
+  sed -i "s/#external=true/external=false/g" gcp-failoverd.sh
 fi
 cp -a configure-gcp-failoverd-init.sh.template configure-gcp-failoverd-init.sh
 cp -a configure-gcp-failoverd-bootstrap.sh.template configure-gcp-failoverd-bootstrap.sh
@@ -60,7 +60,7 @@ sed -i "s/#SECONDARY_IPS/$SECONDARY_IPS/g" configure-gcp-failoverd-bootstrap.sh
 
 for instance in $(echo $loadbalancers | tr ',' ' '); do
   ZONE=`gcloud compute instances list --filter="name=${instance}"|grep ${instance} | awk '{ print $2 }'`
-  gcloud compute scp --zone=$ZONE --internal-ip gcp-failoverd.sh gcp-assign-vip.sh configure-gcp-failoverd-init.sh configure-gcp-failoverd-bootstrap.sh configure-gcp-failoverd-start.sh ${instance}:~/
+  gcloud compute scp --zone=$ZONE --internal-ip gcp-failoverd.sh configure-gcp-failoverd-init.sh configure-gcp-failoverd-bootstrap.sh configure-gcp-failoverd-start.sh ${instance}:~/
   gcloud compute ssh --zone=$ZONE --internal-ip ${instance} -- "cd ~/ && sh -x configure-gcp-failoverd-init.sh"
 done
 
