@@ -69,7 +69,8 @@ for action in stop stop stop; do
   #Now stop the allocated instance
   echo "Taking $action action on instance $INTERNAL_INSTANCE_NAME at $(date)"
   gcloud compute instances $action -q --zone $INTERNAL_INSTANCE_ZONE $INTERNAL_INSTANCE_NAME
-  sleep 20
+  echo "Sleeping for 1 minute for takeover before starting back $INTERNAL_INSTANCE_NAME"
+  sleep 60
   if [[ $action == "stop" ]]; then
     echo "Taking start action on instance $INTERNAL_INSTANCE_NAME at $(date)"
     gcloud compute instances start --zone $INTERNAL_INSTANCE_ZONE $INTERNAL_INSTANCE_NAME
