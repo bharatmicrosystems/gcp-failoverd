@@ -27,12 +27,12 @@ elif [ "stop" == "$param" ] ; then
   systemctl stop nginx
   exit 0
 elif [ "status" == "$param" ] ; then
-  systemctl status nginx
+  curl localhost:80
   status=$?
   if [ $status -eq 0 ]; then
     echo "NGINX Running"
     exit 0
-  elif [ $status -eq 3 ]; then
+  elif [ $status -eq 7 ]; then
     echo "NGINX is Stopped"
     exit 7
   else
@@ -40,12 +40,12 @@ elif [ "status" == "$param" ] ; then
     exit 1
   fi
 elif [ "monitor" == "$param" ] ; then
-  systemctl status nginx
+  curl localhost:80
   status=$?
   if [ $status -eq 0 ]; then
     echo "NGINX Running"
     exit 0
-  elif [ $status -eq 3 ]; then
+  elif [ $status -eq 7 ]; then
     echo "NGINX is Stopped"
     exit 7
   else
