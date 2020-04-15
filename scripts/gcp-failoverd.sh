@@ -21,8 +21,8 @@ END
 
 if [ "start" == "$param" ] ; then
   systemctl start nginx
-  mkdir -p /etc/gcp-failoverd
-  /bin/sh /usr/bin/gcp-assign-vip.sh >> /etc/gcp-failoverd/startup.log
+  mkdir -p /var/log/gcp-failoverd
+  /bin/sh /usr/bin/gcp-assign-vip.sh >> /var/log/gcp-failoverd/startup.log
   exit 0
 elif [ "stop" == "$param" ] ; then
   systemctl stop nginx
