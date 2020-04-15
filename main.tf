@@ -20,7 +20,7 @@ module "nginx-instance01" {
   instance_image = "centos-7-v20191014"
   tags = ["nginx"]
   subnet_name = "default"
-  startup_script = "sudo rpm -ivh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm && sudo yum install -y git wget nginx && sudo systemctl start nginx"
+  startup_script = "sudo rpm -ivh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm && sudo yum install -y git wget nginx"
   scopes = ["compute-rw","storage-rw"]
 }
 
