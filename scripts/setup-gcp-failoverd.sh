@@ -48,7 +48,7 @@ if $external; then
 #else
 #  sed -i "s/#external=true/external=false/g" gcp-assign-vip.sh
 fi
-sed -i "s/#PARAMS/${PARAMS}$healthz/g" configure-gcp-failoverd-start.sh
+sed -i "s/#PARAMS/${PARAMS} healthz=$healthz/g" configure-gcp-failoverd-start.sh
 cp -a configure-gcp-failoverd-init.sh.template configure-gcp-failoverd-init.sh
 cp -a configure-gcp-failoverd-bootstrap.sh.template configure-gcp-failoverd-bootstrap.sh
 PASSWORD=`head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1`
