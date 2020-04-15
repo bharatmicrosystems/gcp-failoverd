@@ -36,15 +36,14 @@ while $internal_status || $external_status; do
     INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
     if [[ $INTERNAL_INSTANCE_STATUS == "RUNNING" ]];
     then
-      echo "Internal IP address in use at $(date)" >> /var/log/gcp-failoverd/default.log
+      echo "Internal IP address in use at $(date) as the instance $INTERNAL_INSTANCE_NAME is running" >> /var/log/gcp-failoverd/default.log
     else
       #Update the alias from the terminated instance to null
-      gcloud compute instances network-interfaces update $INTERNAL_INSTANCE_NAME \
-        --zone $INTERNAL_INSTANCE_ZONE \
-        --aliases "" &>> /var/log/gcp-failoverd/default.log
-      if [ $? -eq 0 ]; then
-        INTERNAL_IP_STATUS="RESERVED"
-      fi
+      until gcloud compute instances network-interfaces update $INTERNAL_INSTANCE_NAME --zone $INTERNAL_INSTANCE_ZONE --aliases "" &>> /var/log/gcp-failoverd/default.log; do
+        echo "Trying to update the alias from $INTERNAL_INSTANCE_NAME to null"
+        sleep 2
+      done
+      INTERNAL_IP_STATUS="RESERVED"
     fi
   fi
   if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
@@ -56,14 +55,15 @@ while $internal_status || $external_status; do
     EXTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(status)')
     if [[ $EXTERNAL_INSTANCE_STATUS == "RUNNING" ]];
     then
-      echo "External IP address in use at $(date)" >> /var/log/gcp-failoverd/default.log
+      echo "External IP address in use at $(date) as the instance $EXTERNAL_INSTANCE_NAME is running" >> /var/log/gcp-failoverd/default.log
     else
       EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].name)')
       #Delete the access config from the terminated node
-      gcloud compute instances delete-access-config --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --access-config-name=${EXTERNAL_ACCESS_CONFIG} &>> /var/log/gcp-failoverd/default.log
-      if [ $? -eq 0 ]; then
-        EXTERNAL_IP_STATUS="RESERVED"
-      fi
+      until gcloud compute instances delete-access-config --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --access-config-name=${EXTERNAL_ACCESS_CONFIG} &>> /var/log/gcp-failoverd/default.log; do
+        echo "Trying to Delete the access config from $INTERNAL_INSTANCE_NAME"
+        sleep 2
+      done
+      EXTERNAL_IP_STATUS="RESERVED"
     fi
   fi
   if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
@@ -71,26 +71,24 @@ while $internal_status || $external_status; do
     echo "Internal IP address in use at $(date)" >> /var/log/gcp-failoverd/default.log
   else
     # Assign IP aliases to me because now I am the MASTER!
-    gcloud compute instances network-interfaces update $(hostname) \
-      --zone $ZONE \
-      --aliases "${INTERNAL_IP}/32" &>> /var/log/gcp-failoverd/default.log
-    if [ $? -eq 0 ]; then
-      echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /var/log/gcp-failoverd/default.log
-      internal_status=false
-    fi
+    until gcloud compute instances network-interfaces update $(hostname) --zone $ZONE --aliases "${INTERNAL_IP}/32" &>> /var/log/gcp-failoverd/default.log; do
+      echo "Trying to assign IP aliases to me because now I am the MASTER!"
+      sleep 2
+    done
+    echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /var/log/gcp-failoverd/default.log
+    internal_status=false
   fi
   if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
   then
     echo "External IP address in use at $(date)" >> /var/log/gcp-failoverd/default.log
   else
     # Assign IP aliases to me because now I am the MASTER!
-    gcloud compute instances add-access-config $(hostname) \
-     --zone $ZONE \
-     --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP &>> /var/log/gcp-failoverd/default.log
-    if [ $? -eq 0 ]; then
-      echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /var/log/gcp-failoverd/default.log
-      external_status=false
-    fi
+    until gcloud compute instances add-access-config $(hostname) --zone $ZONE --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP &>> /var/log/gcp-failoverd/default.log; do
+      echo "Trying to assign IP access config to me because now I am the MASTER!"
+      sleep 2
+    done
+    echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /var/log/gcp-failoverd/default.log
+    external_status=false
   fi
   echo "External IP Status $external_status at $(date)" >> /var/log/gcp-failoverd/default.log
   echo "Internal IP Status $internal_status at $(date)" >> /var/log/gcp-failoverd/default.log
