@@ -54,7 +54,7 @@ mkdir -p /var/log/gcp-failoverd
 echo "$(date): Running agent for internal-vip: $internal_vip & external-vip: $external_vip with param: $param" >> /var/log/gcp-failoverd/startup.log
 if [ "start" == "$param" ] ; then
   systemctl start nginx
-  echo "$(date): Running agent start with params: -i $internal_vip$external_params " >> /var/log/gcp-failoverd/startup.log
+  echo "$(date): Running agent start with params: -i ${internal_vip}${external_params} " >> /var/log/gcp-failoverd/startup.log
   /bin/sh /usr/bin/gcp-assign-vip.sh -i ${internal_vip}${external_params} >> /var/log/gcp-failoverd/startup.log
   exit 0
 elif [ "stop" == "$param" ] ; then
