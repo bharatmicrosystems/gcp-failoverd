@@ -27,30 +27,22 @@ elif [ "stop" == "$param" ] ; then
   systemctl stop nginx
   exit 0
 elif [ "status" == "$param" ] ; then
-  curl localhost:80
-  status=$?
-  if [ $status -eq 0 ]; then
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost)
+  if [ $status -eq 200 ]; then
     echo "NGINX Running"
     exit 0
-  elif [ $status -eq 7 ]; then
+  else
     echo "NGINX is Stopped"
     exit 7
-  else
-    echo "NGINX is Errored"
-    exit 1
   fi
 elif [ "monitor" == "$param" ] ; then
-  curl localhost:80
-  status=$?
-  if [ $status -eq 0 ]; then
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost)
+  if [ $status -eq 200 ]; then
     echo "NGINX Running"
     exit 0
-  elif [ $status -eq 7 ]; then
+  else
     echo "NGINX is Stopped"
     exit 7
-  else
-    echo "NGINX is Errored"
-    exit 1
   fi
 elif [ "meta-data" == "$param" ] ; then
   meta_data
