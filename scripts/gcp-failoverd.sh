@@ -41,10 +41,10 @@ meta_data() {
 </resource-agent>
 END
 }
-if [ "$external_vip" != ""] ; then
-  external_params=" -e $external_vip"
-else
+if [ "$external_vip" == ""] ; then
   external_params=""
+else
+  external_params=" -e $external_vip"
 fi
 
 if [ "$healthz" == ""] ; then
