@@ -1,5 +1,7 @@
 #!/bin/bash
 param=$1
+internal_vip=$OCF_RESKEY_internal_vip
+external_vip=$OCF_RESKEY_external_vip
 meta_data() {
   cat <<END
 <?xml version="1.0"?>
@@ -8,6 +10,20 @@ meta_data() {
   <version>0.1</version>
   <longdesc lang="en"> floatip ocf resource agent for claiming a specified Floating IP via the GCP API</longdesc>
   <shortdesc lang="en">Assign Floating IP via GCP API</shortdesc>
+  <parameters>
+  <parameter name="internal_vip" unique="0" required="1">
+    <longdesc lang="en">
+    Name of the Internal VIP to be assigned to the resource
+    </longdesc>
+    <shortdesc lang="en">Internal VIP</shortdesc>
+  </parameter>
+  <parameter name="external_vip" unique="0" required="0">
+    <longdesc lang="en">
+    Name of the External VIP to be assigned to the resource
+    </longdesc>
+    <shortdesc lang="en">External VIP</shortdesc>
+  </parameter>
+</parameters>
   <actions>
     <action name="start"        timeout="6000" />
     <action name="stop"         timeout="20" />
@@ -18,11 +34,11 @@ meta_data() {
 </resource-agent>
 END
 }
-
+echo "$(date): Running agent for internal-vip: $internal_vip & external-vip: $external_vip with param: $param" >> /var/log/gcp-failoverd/startup.log
 if [ "start" == "$param" ] ; then
   systemctl start nginx
   mkdir -p /var/log/gcp-failoverd
-  /bin/sh /usr/bin/gcp-assign-vip.sh >> /var/log/gcp-failoverd/startup.log
+  /bin/sh /usr/bin/gcp-assign-vip.sh -i $internal_vip -e $external_vip >> /var/log/gcp-failoverd/startup.log
   exit 0
 elif [ "stop" == "$param" ] ; then
   systemctl stop nginx

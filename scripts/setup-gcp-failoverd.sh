@@ -29,19 +29,23 @@ fi
 
 priority=150
 instance=$(echo $loadbalancers | tr ',' ' ' | awk {'print $1'})
+PARAMS=''
 if $internal; then
-  sed -i "s/#internal_vip/internal_vip=${internal_vip}/g" gcp-assign-vip.sh
-  sed -i "s/#internal=true/internal=true/g" gcp-assign-vip.sh
-else
-  sed -i "s/#internal=true/internal=false/g" gcp-assign-vip.sh
+  PARAMS="$PARAMS internal_vip=${internal_vip}"
+#  sed -i "s/#PARAMS/internal_vip=${internal_vip}/g" configure-gcp-failoverd-start.sh
+#  sed -i "s/#internal=true/internal=true/g" gcp-assign-vip.sh
+#else
+#  sed -i "s/#internal=true/internal=false/g" gcp-assign-vip.sh
 fi
 
 if $external; then
-  sed -i "s/#external_vip/external_vip=${external_vip}/g" gcp-assign-vip.sh
-  sed -i "s/#external=true/external=true/g" gcp-assign-vip.sh
-else
-  sed -i "s/#external=true/external=false/g" gcp-assign-vip.sh
+    PARAMS="$PARAMS external_vip=${external_vip}"
+#  sed -i "s/#external_vip/external_vip=${external_vip}/g" gcp-assign-vip.sh
+#  sed -i "s/#external=true/external=true/g" gcp-assign-vip.sh
+#else
+#  sed -i "s/#external=true/external=false/g" gcp-assign-vip.sh
 fi
+sed -i "s/#PARAMS/${PARAMS}/g" configure-gcp-failoverd-start.sh
 cp -a configure-gcp-failoverd-init.sh.template configure-gcp-failoverd-init.sh
 cp -a configure-gcp-failoverd-bootstrap.sh.template configure-gcp-failoverd-bootstrap.sh
 PASSWORD=`head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1`

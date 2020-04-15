@@ -1,7 +1,22 @@
-#internal_vip
-#internal=true
-#external_vip
-#external=true
+#!/bin/bash
+internal=false
+external=false
+while getopts ":i:e:" opt; do
+    case "$opt" in
+    i)  internal_vip=$OPTARG
+        internal=true
+        ;;
+    e)  external_vip=$OPTARG
+        external=true
+    esac
+done
+
+if $internal; then
+  echo 'Startup....'
+else
+  echo "Usage: $0 -i INTERNAL_VIP_NAME [-e EXTERNAL_VIP_NAME]" &>> /var/log/gcp-failoverd/startup.log
+  exit 1
+fi
 
 mkdir -p /var/log/gcp-failoverd
 internal_status=true

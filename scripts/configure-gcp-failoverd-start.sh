@@ -7,5 +7,5 @@ sudo mv gcp-assign-vip.sh /usr/bin/gcp-assign-vip.sh
 sudo chmod +x /usr/bin/gcp-assign-vip.sh
 sudo chown root:root /usr/bin/gcp-assign-vip.sh
 sudo chown -R root:root /usr/lib/ocf/resource.d/gcp
-sudo pcs resource create GCPFailoverd ocf:gcp:gcp-failoverd
+sudo pcs resource create GCPFailoverd ocf:gcp:gcp-failoverd#PARAMS
 sudo pcs status
