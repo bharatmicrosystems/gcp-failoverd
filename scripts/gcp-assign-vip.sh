@@ -8,7 +8,7 @@ internal_status=true
 external_status=true
 while $internal_status || $external_status; do
   ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
-  if $internal; then
+  if $internal && $internal_status; then
     INTERNAL_IP=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $2 }'`
     INTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $NF }'`
     if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
@@ -17,6 +17,13 @@ while $internal_status || $external_status; do
       INTERNAL_INSTANCE_NAME=$(gcloud compute addresses describe ${internal_vip} --region=${INTERNAL_INSTANCE_REGION} --format='get(users[0])'|awk -F'/' '{print $NF}')
       INTERNAL_INSTANCE_ZONE=$(gcloud compute instances list --filter="name=${INTERNAL_INSTANCE_NAME}"|grep ${INTERNAL_INSTANCE_NAME}|awk '{print $2}')
       INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
+      #First check if already assigned to it
+      if [[ $INTERNAL_INSTANCE_NAME == $(hostname) ]];
+      then
+        echo "$INTERNAL_IP is already assigned to $INTERNAL_INSTANCE_NAME. Taking no action..." &>> /var/log/gcp-failoverd/default.log
+        internal_status=false
+        continue
+      fi
       #Wait for the instance to stop before taking over
       while [[ $INTERNAL_INSTANCE_STATUS == "STOPPING" ]]; do
         INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
@@ -57,6 +64,13 @@ while $internal_status || $external_status; do
       EXTERNAL_INSTANCE_ZONE=$(gcloud compute instances list --filter="name=${EXTERNAL_INSTANCE_NAME}"|grep ${EXTERNAL_INSTANCE_NAME}|awk '{print $2}')
       EXTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(status)')
       EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].name)')
+      #First check if already assigned to it
+      if [[ $EXTERNAL_INSTANCE_NAME == $(hostname) ]];
+      then
+        echo "$EXTERNAL_IP is already assigned to $EXTERNAL_INSTANCE_NAME. Taking no action..." &>> /var/log/gcp-failoverd/default.log
+        external_status=false
+        continue
+      fi
       #Wait for the instance to stop before taking over
       while [[ $EXTERNAL_INSTANCE_STATUS == "STOPPING" ]]; do
         EXTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(status)')
