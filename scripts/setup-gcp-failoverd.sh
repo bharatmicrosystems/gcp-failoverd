@@ -3,7 +3,8 @@ lb=false
 cm=false
 internal=false
 external=false
-while getopts ":i:e:l:c:" opt; do
+healthz=":80/"
+while getopts ":i:e:l:h:c:" opt; do
     case "$opt" in
     i)  internal_vip=$OPTARG
         internal=true
@@ -14,6 +15,8 @@ while getopts ":i:e:l:c:" opt; do
     l)  loadbalancers=$OPTARG
         lb=true
         ;;
+    h)  healthz=$OPTARG
+        ;;
     c)  CLUSTER_NAME=$OPTARG
         cn=true
     esac
@@ -22,7 +25,7 @@ done
 if $lb && $cn && $internal; then
   echo 'Startup....'
 else
-  echo "Usage: $0 -l LOAD_BALANCERS -c CLUSTER_NAME -i INTERNAL_VIP_NAME [-e EXTERNAL_VIP_NAME]" >&2
+  echo "Usage: $0 -l LOAD_BALANCERS -c CLUSTER_NAME -i INTERNAL_VIP_NAME [-e EXTERNAL_VIP_NAME -h HEALTHZ_PORT_URI]" >&2
   exit 1
 fi
 
@@ -45,7 +48,7 @@ if $external; then
 #else
 #  sed -i "s/#external=true/external=false/g" gcp-assign-vip.sh
 fi
-sed -i "s/#PARAMS/${PARAMS}/g" configure-gcp-failoverd-start.sh
+sed -i "s/#PARAMS/${PARAMS}$healthz/g" configure-gcp-failoverd-start.sh
 cp -a configure-gcp-failoverd-init.sh.template configure-gcp-failoverd-init.sh
 cp -a configure-gcp-failoverd-bootstrap.sh.template configure-gcp-failoverd-bootstrap.sh
 PASSWORD=`head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1`
@@ -76,3 +79,7 @@ for instance in $(echo $loadbalancers | tr ',' ' '); do
   ZONE=`gcloud compute instances list --filter="name=${instance}"|grep ${instance} | awk '{ print $2 }'`
   gcloud compute ssh --zone=$ZONE --internal-ip ${instance} -- "cd ~/ && sh -x configure-gcp-failoverd-start.sh"
 done
+
+echo "Sleeping for 10 secs before firing test..."
+sleep 10
+sh -x smoke-test.sh -i $internal_vip -e $external_vip -l $loadbalancers -h $healthz

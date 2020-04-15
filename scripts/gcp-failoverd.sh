@@ -2,6 +2,7 @@
 param=$1
 internal_vip=$OCF_RESKEY_internal_vip
 external_vip=$OCF_RESKEY_external_vip
+healthz=$OCF_RESKEY_healthz
 meta_data() {
   cat <<END
 <?xml version="1.0"?>
@@ -23,6 +24,12 @@ meta_data() {
     </longdesc>
     <shortdesc lang="en">External VIP</shortdesc>
   </parameter>
+  <parameter name="healthz" unique="0" required="0">
+    <longdesc lang="en">
+    The Health check endpoint in the format :port/url (default :80/)
+    </longdesc>
+    <shortdesc lang="en">Health check endpoint</shortdesc>
+  </parameter>
 </parameters>
   <actions>
     <action name="start"        timeout="6000" />
@@ -34,17 +41,26 @@ meta_data() {
 </resource-agent>
 END
 }
+if [ "$external_vip" != ""] ; then
+  external_params=" -e $external_vip"
+else
+  external_params=""
+fi
+
+if [ "$healthz" == ""] ; then
+  healthz=:80/
+fi
+mkdir -p /var/log/gcp-failoverd
 echo "$(date): Running agent for internal-vip: $internal_vip & external-vip: $external_vip with param: $param" >> /var/log/gcp-failoverd/startup.log
 if [ "start" == "$param" ] ; then
   systemctl start nginx
-  mkdir -p /var/log/gcp-failoverd
-  /bin/sh /usr/bin/gcp-assign-vip.sh -i $internal_vip -e $external_vip >> /var/log/gcp-failoverd/startup.log
+  /bin/sh /usr/bin/gcp-assign-vip.sh -i $internal_vip$external_params >> /var/log/gcp-failoverd/startup.log
   exit 0
 elif [ "stop" == "$param" ] ; then
   systemctl stop nginx
   exit 0
 elif [ "status" == "$param" ] ; then
-  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost)
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost$healthz)
   if [ $status -eq 200 ]; then
     echo "NGINX Running"
     exit 0
@@ -53,7 +69,7 @@ elif [ "status" == "$param" ] ; then
     exit 7
   fi
 elif [ "monitor" == "$param" ] ; then
-  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost)
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost$healthz)
   if [ $status -eq 200 ]; then
     echo "NGINX Running"
     exit 0
