@@ -67,6 +67,11 @@ for action in stop stop delete delete; do
   #Now stop the allocated instance
   echo "Taking $action action on instance $INTERNAL_INSTANCE at $(date)"
   gcloud compute instances $action --zone $INTERNAL_INSTANCE_ZONE $INTERNAL_INSTANCE_NAME
+  sleep 5
+  if [[ $action == "stop" ]]; then
+    echo "Taking start action on instance $INTERNAL_INSTANCE at $(date)"
+    gcloud compute instances start --zone $INTERNAL_INSTANCE_ZONE $INTERNAL_INSTANCE_NAME
+  fi
 # INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
 # while [[ $INTERNAL_INSTANCE_STATUS == "STOPPING" ]]
 # do
