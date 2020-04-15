@@ -23,7 +23,7 @@ else
   echo "Usage: $0 -l LOAD_BALANCERS -i INTERNAL_VIP_NAME [-e EXTERNAL_VIP_NAME -h HEALTHZ_PORT_URI]"
   exit 1
 fi
-for action in stop stop delete delete; do
+for action in stop stop stop; do
   if $internal; then
     #Get the VIPS
     INTERNAL_IP=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $2 }'`
