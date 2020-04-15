@@ -26,16 +26,6 @@ git clone https://github.com/bharatmicrosystems/gcp-failoverd.git
 cd gcp-failoverd
 cp -a scripts/ exec/
 cd exec/
-git clone https://github.com/bharatmicrosystems/gcp-failoverd.git
-cd gcp-failoverd
-git checkout develop
-cp -a scripts/ exec/
-cd exec/
-git clone https://github.com/bharatmicrosystems/gcp-failoverd.git
-cd gcp-failoverd
-git checkout develop
-cp -a scripts/ exec/
-cd exec/
 sh -x setup-gcp-failoverd.sh -i nginx-internal-vip -e nginx-external-vip -l nginx-instance01,nginx-instance02 -c nginx-cluster -h :80
 ```
 This will also run a quick smoke test at the end to demonstrate the effect of stopping an instance!
