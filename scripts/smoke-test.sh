@@ -44,6 +44,8 @@ for action in stop stop delete delete; do
     status=$(curl -s -o /dev/null -w '%{http_code}' http://$INTERNAL_IP$healthz)
     echo "$(date): internal status: $status"
   fi
+  echo "Sleeping for 10 secs..."
+  sleep 10
   if $external; then
     EXTERNAL_IP=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $2 }'`
     EXTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $NF }'`
