@@ -1,9 +1,8 @@
 #!/bin/bash
 param=$1
-EXTERNAL_INSTANCE_NAME=$(hostname)
-EXTERNAL_INSTANCE_ZONE=$(gcloud compute instances list --filter="name=${EXTERNAL_INSTANCE_NAME}"|grep ${EXTERNAL_INSTANCE_NAME}|awk '{print $2}')
-HAS_FLOATING_IP=`gcloud compute instances describe --zone=$EXTERNAL_INSTANCE_ZONE $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].natIP)'`
-mkdir -p /etc/gcp-failoverd
+internal_vip=$OCF_RESKEY_internal_vip
+external_vip=$OCF_RESKEY_external_vip
+healthz=$OCF_RESKEY_healthz
 meta_data() {
   cat <<END
 <?xml version="1.0"?>
@@ -12,6 +11,26 @@ meta_data() {
   <version>0.1</version>
   <longdesc lang="en"> floatip ocf resource agent for claiming a specified Floating IP via the GCP API</longdesc>
   <shortdesc lang="en">Assign Floating IP via GCP API</shortdesc>
+  <parameters>
+  <parameter name="internal_vip" unique="0" required="1">
+    <longdesc lang="en">
+    Name of the Internal VIP to be assigned to the resource
+    </longdesc>
+    <shortdesc lang="en">Internal VIP</shortdesc>
+  </parameter>
+  <parameter name="external_vip" unique="0" required="0">
+    <longdesc lang="en">
+    Name of the External VIP to be assigned to the resource
+    </longdesc>
+    <shortdesc lang="en">External VIP</shortdesc>
+  </parameter>
+  <parameter name="healthz" unique="0" required="0">
+    <longdesc lang="en">
+    The Health check endpoint in the format :port/url (default :80/)
+    </longdesc>
+    <shortdesc lang="en">Health check endpoint</shortdesc>
+  </parameter>
+</parameters>
   <actions>
     <action name="start"        timeout="6000" />
     <action name="stop"         timeout="20" />
@@ -22,120 +41,41 @@ meta_data() {
 </resource-agent>
 END
 }
+if [ "$external_vip" == ""] ; then
+  external_params=""
+else
+  external_params=" -e $external_vip"
+fi
 
-assign_vip() {
-  #internal_vip
-  #internal=true
-  #external_vip
-  #external=true
-
-  mkdir -p /etc/gcp-failoverd
-  #Check if the VIP is being used
-  if $internal; then
-      INTERNAL_IP=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $2 }'`
-  fi
-  if $external; then
-      EXTERNAL_IP=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $2 }'`
-  fi
-  internal_status=true
-  external_status=true
-  while $internal_status || $external_status; do
-    ZONE=`gcloud compute instances list --filter="name=$(hostname)"| grep $(hostname) | awk '{ print $2 }'`
-    if $internal; then
-      INTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $NF }'`
-    else
-      internal_status=false
-    fi
-
-    if $external; then
-      EXTERNAL_IP_STATUS=`gcloud compute addresses list --filter="name=$external_vip"| grep $external_vip | awk '{ print $NF }'`
-    else
-      external_status=false
-    fi
-
-    if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
-    then
-      #Check if the instance where the IP is tagged is running
-      INTERNAL_INSTANCE_REGION=$(gcloud compute addresses list --filter="name=${internal_vip}"|grep ${internal_vip}|awk '{print $(NF-2)}')
-      INTERNAL_INSTANCE_NAME=$(gcloud compute addresses describe ${internal_vip} --region=${INTERNAL_INSTANCE_REGION} --format='get(users[0])'|awk -F'/' '{print $NF}')
-      INTERNAL_INSTANCE_ZONE=$(gcloud compute instances list --filter="name=${INTERNAL_INSTANCE_NAME}"|grep ${INTERNAL_INSTANCE_NAME}|awk '{print $2}')
-      INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
-      if [[ $INTERNAL_INSTANCE_STATUS == "RUNNING" ]];
-      then
-        echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
-      else
-        #Update the alias from the terminated instance to null
-        gcloud compute instances network-interfaces update $INTERNAL_INSTANCE_NAME \
-          --zone $INTERNAL_INSTANCE_ZONE \
-          --aliases "" >> /etc/gcp-failoverd/takeover.log 2>&1
-        INTERNAL_IP_STATUS="RESERVED"
-      fi
-    fi
-    if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
-    then
-      #Check if the instance where the IP is tagged is running
-      EXTERNAL_INSTANCE_REGION=$(gcloud compute addresses list --filter="name=${external_vip}"|grep ${external_vip}|awk '{print $(NF-1)}')
-      EXTERNAL_INSTANCE_NAME=$(gcloud compute addresses describe ${external_vip} --region=${EXTERNAL_INSTANCE_REGION} --format='get(users[0])'|awk -F'/' '{print $NF}')
-      EXTERNAL_INSTANCE_ZONE=$(gcloud compute instances list --filter="name=${EXTERNAL_INSTANCE_NAME}"|grep ${EXTERNAL_INSTANCE_NAME}|awk '{print $2}')
-      EXTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(status)')
-      if [[ $EXTERNAL_INSTANCE_STATUS == "RUNNING" ]];
-      then
-        echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
-      else
-        EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].name)')
-        #Delete the access config from the terminated node
-        gcloud compute instances delete-access-config --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --access-config-name=${EXTERNAL_ACCESS_CONFIG}
-        EXTERNAL_IP_STATUS="RESERVED"
-      fi
-    fi
-    if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
-    then
-      echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
-    else
-      # Assign IP aliases to me because now I am the MASTER!
-      gcloud compute instances network-interfaces update $(hostname) \
-        --zone $ZONE \
-        --aliases "${INTERNAL_IP}/32" >> /etc/gcp-failoverd/takeover.log 2>&1
-      if [ $? -eq 0 ]; then
-        echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
-        internal_status=false
-      fi
-    fi
-    if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
-    then
-      echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
-    else
-      # Assign IP aliases to me because now I am the MASTER!
-      gcloud compute instances add-access-config $(hostname) \
-       --zone $ZONE \
-       --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /etc/gcp-failoverd/takeover.log 2>&1
-      if [ $? -eq 0 ]; then
-        echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
-        external_status=false
-      fi
-    fi
-    sleep 2
-  done
-} >> /etc/gcp-failoverd/gcp-failoverd.log
-
-
+if [ "$healthz" == ""] ; then
+  healthz=":80/"
+fi
+mkdir -p /var/log/gcp-failoverd
+echo "$(date): Running agent for internal-vip: $internal_vip & external-vip: $external_vip with param: $param" >> /var/log/gcp-failoverd/startup.log
 if [ "start" == "$param" ] ; then
-  assign_vip
+  systemctl start nginx
+  echo "$(date): Running agent start with params: -i ${internal_vip}${external_params} " >> /var/log/gcp-failoverd/startup.log
+  /bin/sh /usr/bin/gcp-assign-vip.sh -i ${internal_vip}${external_params} >> /var/log/gcp-failoverd/startup.log
   exit 0
 elif [ "stop" == "$param" ] ; then
-  exit 0;
+  systemctl stop nginx
+  exit 0
 elif [ "status" == "$param" ] ; then
-  if [[ $HAS_FLOATING_IP != '' ]]; then
-    echo "Has Floating IP"
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost$healthz)
+  if [ $status -eq 200 ]; then
+    echo "NGINX Running"
     exit 0
   else
-    echo "Does Not Have Floating IP"
-    exit 1
+    echo "NGINX is Stopped"
+    exit 7
   fi
 elif [ "monitor" == "$param" ] ; then
-  if [[ $HAS_FLOATING_IP != '' ]]; then
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost$healthz)
+  if [ $status -eq 200 ]; then
+    echo "NGINX Running"
     exit 0
   else
+    echo "NGINX is Stopped"
     exit 7
   fi
 elif [ "meta-data" == "$param" ] ; then
