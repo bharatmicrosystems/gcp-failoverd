@@ -92,5 +92,7 @@ while $internal_status || $external_status; do
       external_status=false
     fi
   fi
+  echo "External IP Status $external_status at $(date)" >> /var/log/gcp-failoverd/default.log
+  echo "Internal IP Status $internal_status at $(date)" >> /var/log/gcp-failoverd/default.log
   sleep 2
 done
