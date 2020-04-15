@@ -3,7 +3,7 @@
 #external_vip
 #external=true
 
-mkdir -p /etc/gcp-failoverd
+mkdir -p /var/log/gcp-failoverd
 #Check if the VIP is being used
 if $internal; then
     INTERNAL_IP=`gcloud compute addresses list --filter="name=$internal_vip"| grep $internal_vip | awk '{ print $2 }'`
@@ -36,12 +36,12 @@ while $internal_status || $external_status; do
     INTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${INTERNAL_INSTANCE_ZONE} $INTERNAL_INSTANCE_NAME --format='get(status)')
     if [[ $INTERNAL_INSTANCE_STATUS == "RUNNING" ]];
     then
-      echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+      echo "Internal IP address in use at $(date)" >> /var/log/gcp-failoverd/poll.log
     else
       #Update the alias from the terminated instance to null
       gcloud compute instances network-interfaces update $INTERNAL_INSTANCE_NAME \
         --zone $INTERNAL_INSTANCE_ZONE \
-        --aliases "" >> /etc/gcp-failoverd/takeover.log 2>&1
+        --aliases "" >> /var/log/gcp-failoverd/takeover.log 2>&1
       INTERNAL_IP_STATUS="RESERVED"
     fi
   fi
@@ -54,7 +54,7 @@ while $internal_status || $external_status; do
     EXTERNAL_INSTANCE_STATUS=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(status)')
     if [[ $EXTERNAL_INSTANCE_STATUS == "RUNNING" ]];
     then
-      echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+      echo "External IP address in use at $(date)" >> /var/log/gcp-failoverd/poll.log
     else
       EXTERNAL_ACCESS_CONFIG=$(gcloud compute instances describe --zone=${EXTERNAL_INSTANCE_ZONE} $EXTERNAL_INSTANCE_NAME --format='get(networkInterfaces[0].accessConfigs[0].name)')
       #Delete the access config from the terminated node
@@ -64,27 +64,27 @@ while $internal_status || $external_status; do
   fi
   if [[ $INTERNAL_IP_STATUS == "IN_USE" ]];
   then
-    echo "Internal IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+    echo "Internal IP address in use at $(date)" >> /var/log/gcp-failoverd/poll.log
   else
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances network-interfaces update $(hostname) \
       --zone $ZONE \
-      --aliases "${INTERNAL_IP}/32" >> /etc/gcp-failoverd/takeover.log 2>&1
+      --aliases "${INTERNAL_IP}/32" >> /var/log/gcp-failoverd/takeover.log 2>&1
     if [ $? -eq 0 ]; then
-      echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+      echo "I became the MASTER of ${INTERNAL_IP} at: $(date)" >> /var/log/gcp-failoverd/takeover.log
       internal_status=false
     fi
   fi
   if [[ $EXTERNAL_IP_STATUS == "IN_USE" ]];
   then
-    echo "External IP address in use at $(date)" >> /etc/gcp-failoverd/poll.log
+    echo "External IP address in use at $(date)" >> /var/log/gcp-failoverd/poll.log
   else
     # Assign IP aliases to me because now I am the MASTER!
     gcloud compute instances add-access-config $(hostname) \
      --zone $ZONE \
-     --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /etc/gcp-failoverd/takeover.log 2>&1
+     --access-config-name "$(hostname)-access-config" --address $EXTERNAL_IP >> /var/log/gcp-failoverd/takeover.log 2>&1
     if [ $? -eq 0 ]; then
-      echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /etc/gcp-failoverd/takeover.log
+      echo "I became the MASTER of ${EXTERNAL_IP} at: $(date)" >> /var/log/gcp-failoverd/takeover.log
       external_status=false
     fi
   fi
