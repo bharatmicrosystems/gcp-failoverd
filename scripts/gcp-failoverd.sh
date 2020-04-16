@@ -41,14 +41,14 @@ meta_data() {
 </resource-agent>
 END
 }
-if [ "$external_vip" == ""] ; then
+if [[ "$external_vip" == "" ]] ; then
   external_params=""
 else
   external_params=" -e $external_vip"
 fi
 
-if [ "$healthz" == ""] ; then
-  healthz=":80/"
+if [[ "$healthz" == "" ]] ; then
+  healthz=':80/'
 fi
 mkdir -p /var/log/gcp-failoverd
 echo "$(date): Running agent for internal-vip: $internal_vip & external-vip: $external_vip with param: $param" >> /var/log/gcp-failoverd/startup.log
