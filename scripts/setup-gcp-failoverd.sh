@@ -82,4 +82,4 @@ done
 
 echo "Sleeping for 10 secs before firing test..."
 sleep 10
-sh smoke-test.sh -i $internal_vip -e $external_vip -l $loadbalancers -h $healthz
+sh -x smoke-test.sh -i $internal_vip -e $external_vip -l $loadbalancers -h $healthz
