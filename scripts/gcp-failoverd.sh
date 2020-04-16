@@ -41,13 +41,13 @@ meta_data() {
 </resource-agent>
 END
 }
-if [ "$external_vip" == ""] ; then
+if [[ "$external_vip" == "" ]] ; then
   external_params=""
 else
   external_params=" -e $external_vip"
 fi
 
-if [ "$healthz" == ""] ; then
+if [[ "$healthz" == "" ]] ; then
   healthz=':80/'
 fi
 mkdir -p /var/log/gcp-failoverd
